@@ -1,22 +1,33 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Package, Lock, Mail, ArrowRight } from 'lucide-react';
+import { api } from '../services/api';
 
 const Login = () => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState('');
   const navigate = useNavigate();
 
-  const handleLogin = (e) => {
+  const handleLogin = async (e) => {
     e.preventDefault();
     setIsLoading(true);
-    
-    // Simulate API call
-    setTimeout(() => {
-      setIsLoading(false);
+    setError('');
+
+    try {
+      const res = await api.post('/auth/login', { email, password });
+      const token = res?.data?.token;
+      if (!token) {
+        throw new Error('Invalid login response');
+      }
+      localStorage.setItem('token', token);
       navigate('/dashboard');
-    }, 1000);
+    } catch (err) {
+      setError(err.message || 'Login failed');
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   return (
@@ -68,6 +79,12 @@ const Login = () => {
             </div>
             
           </div>
+
+          {error && (
+            <p className="text-sm text-rose-600 bg-rose-50 border border-rose-100 rounded-lg px-3 py-2">
+              {error}
+            </p>
+          )}
 
           <div className="flex items-center justify-between">
             <div className="flex items-center">

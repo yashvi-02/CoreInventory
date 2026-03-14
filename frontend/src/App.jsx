@@ -11,6 +11,7 @@ import Transfers from './pages/Transfers';
 import Warehouses from './pages/Warehouses';
 import Reports from './pages/Reports';
 import Settings from './pages/Settings';
+import Adjustments from './pages/Adjustments';
 
 function App() {
   return (
@@ -23,13 +24,11 @@ function App() {
           <Route index element={<Navigate to="/dashboard" replace />} />
           <Route path="dashboard" element={<Dashboard />} />
           <Route path="products" element={<Products />} />
-          
-          {/* Placeholder routes for future expansion */}
           <Route path="operations" element={<Operations />} />
           <Route path="receipts" element={<Receipts />} />
           <Route path="delivery" element={<DeliveryOrders />} />
           <Route path="transfers" element={<Transfers />} />
-          <Route path="adjustments" element={<div className="p-6">Inventory Adjustments Page</div>} />
+          <Route path="adjustments" element={<Adjustments />} />
           <Route path="warehouses" element={<Warehouses />} />
           <Route path="ledger" element={<StockLedger />} />
           <Route path="reports" element={<Reports />} />
