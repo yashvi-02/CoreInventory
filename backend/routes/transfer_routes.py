@@ -15,16 +15,35 @@ def get_transfers():
         return error_response(str(e), 500)
 
 
+@transfer_bp.route("/<int:transfer_id>", methods=["GET"], strict_slashes=False)
+@jwt_required()
+def get_transfer(transfer_id):
+    try:
+        transfer = TransferService.get_by_id(transfer_id)
+        return success_response(transfer, "Fetched transfer", 200)
+    except ValueError as e:
+        return error_response(str(e), 404)
+    except Exception as e:
+        return error_response(str(e), 500)
+
 @transfer_bp.route("", methods=["POST"], strict_slashes=False)
 @jwt_required()
 def create_transfer():
     data = request.json
-    if not data:
-        return error_response("Missing JSON payload", 400)
-
     try:
         transfer = TransferService.create(data)
-        return success_response(transfer, "Stock transferred successfully", 201)
+        return success_response(transfer, "Transfer drafted successfully", 201)
+    except ValueError as e:
+        return error_response(str(e), 400)
+    except Exception as e:
+        return error_response(str(e), 500)
+
+@transfer_bp.route("/<int:transfer_id>/validate", methods=["POST"], strict_slashes=False)
+@jwt_required()
+def validate_transfer(transfer_id):
+    try:
+        transfer = TransferService.validate(transfer_id)
+        return success_response(transfer, "Transfer validated successfully", 200)
     except ValueError as e:
         return error_response(str(e), 400)
     except Exception as e:

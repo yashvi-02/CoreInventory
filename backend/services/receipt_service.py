@@ -8,52 +8,74 @@ class ReceiptService:
     @staticmethod
     def get_all():
         receipts = Receipt.query.all()
-        return [{"id": r.id, "supplier": r.supplier, "created_at": r.created_at} for r in receipts]
+        return [r.to_dict() for r in receipts]
+
+    @staticmethod
+    def get_by_id(receipt_id):
+        receipt = Receipt.query.get(receipt_id)
+        if not receipt:
+            raise ValueError("Receipt not found")
+        return receipt.to_dict()
 
     @staticmethod
     def create(data):
-        required_fields = ["supplier", "product_id", "warehouse_id", "quantity"]
-        for field in required_fields:
-            if field not in data:
-                raise ValueError(f"Missing required field: {field}")
+        if not data or "supplier" not in data or "items" not in data:
+            raise ValueError("Missing supplier or items")
 
-        if data["quantity"] <= 0:
-            raise ValueError("Quantity must be greater than zero")
-
-        receipt = Receipt(
-            supplier=data["supplier"],
-            product_id=data["product_id"],
-            quantity=data["quantity"]
-        )
+        receipt = Receipt(supplier=data["supplier"], status="draft")
         db.session.add(receipt)
-        db.session.flush() # get receipt ID
+        db.session.flush()
 
-        inventory = Inventory.query.filter_by(
-            product_id=data["product_id"],
-            warehouse_id=data["warehouse_id"]
-        ).first()
-
-        if inventory:
-            inventory.quantity += data["quantity"]
-        else:
-            inventory = Inventory(
-                product_id=data["product_id"],
-                warehouse_id=data["warehouse_id"],
-                quantity=data["quantity"]
+        from models.receipt_model import ReceiptItem
+        for item in data["items"]:
+            if item["quantity"] <= 0:
+                raise ValueError(f"Quantity must be greater than zero for product {item.get('product_id')}")
+            ri = ReceiptItem(
+                receipt_id=receipt.id,
+                product_id=item["product_id"],
+                quantity=item["quantity"]
             )
-            db.session.add(inventory)
+            db.session.add(ri)
 
-        LedgerService.log_transaction(
-            product_id=data["product_id"],
-            warehouse_id=data["warehouse_id"],
-            operation_type="RECEIPT",
-            quantity_change=data["quantity"],
-            reference_id=receipt.id
-        )
+        db.session.commit()
+        return Receipt.query.get(receipt.id).to_dict()
 
-        try:
-            db.session.commit()
-            return {"id": receipt.id, "supplier": receipt.supplier, "quantity": data["quantity"]}
-        except Exception as e:
-            db.session.rollback()
-            raise Exception("Failed to create receipt")
+    @staticmethod
+    def validate(receipt_id, warehouse_id):
+        receipt = Receipt.query.get(receipt_id)
+        if not receipt:
+            raise ValueError("Receipt not found")
+        
+        if receipt.status == "done":
+            raise ValueError("Receipt is already validated")
+
+        receipt.status = "done"
+
+        from models.inventory_model import Inventory
+        for item in receipt.items:
+            inventory = Inventory.query.filter_by(
+                product_id=item.product_id,
+                warehouse_id=warehouse_id
+            ).first()
+
+            if inventory:
+                inventory.quantity += item.quantity
+            else:
+                inventory = Inventory(
+                    product_id=item.product_id,
+                    warehouse_id=warehouse_id,
+                    quantity=item.quantity,
+                    location=""
+                )
+                db.session.add(inventory)
+
+            LedgerService.log_transaction(
+                product_id=item.product_id,
+                warehouse_id=warehouse_id,
+                operation_type="receipt",
+                quantity_change=item.quantity,
+                reference_id=receipt.id
+            )
+
+        db.session.commit()
+        return receipt.to_dict()

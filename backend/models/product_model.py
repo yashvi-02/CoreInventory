@@ -8,9 +8,13 @@ class Product(db.Model):
     sku = db.Column(db.String(100), unique=True, nullable=False)
     quantity = db.Column(db.Integer, default=0)
     price = db.Column(db.Float)
-    category = db.Column(db.String(100))
+    category_id = db.Column(db.Integer, db.ForeignKey("categories.id"))
+    unit = db.Column(db.String(50), default="units")
+    reorder_level = db.Column(db.Integer, default=10)
 
     created_at = db.Column(db.DateTime, server_default=db.func.now())
+
+    category = db.relationship("Category")
 
     def to_dict(self):
         return {
@@ -19,5 +23,7 @@ class Product(db.Model):
             "sku": self.sku,
             "quantity": self.quantity,
             "price": self.price,
-            "category": self.category
+            "category_id": self.category_id,
+            "unit": self.unit,
+            "reorder_level": self.reorder_level
         }

@@ -9,16 +9,19 @@ class Inventory(db.Model):
 
     quantity = db.Column(db.Integer, default=0)
 
-    warehouse_id = db.Column(db.Integer)
+    warehouse_id = db.Column(db.Integer, db.ForeignKey("warehouses.id"), nullable=False)
+    location = db.Column(db.String(200)) # specific aisle/bin/etc
 
     updated_at = db.Column(db.DateTime, server_default=db.func.now(), onupdate=db.func.now())
 
     product = db.relationship("Product")
+    warehouse = db.relationship("Warehouse")
 
     def to_dict(self):
         return {
             "id": self.id,
             "product_id": self.product_id,
-            "quantity": self.quantity,
-            "warehouse_id": self.warehouse_id
+            "warehouse_id": self.warehouse_id,
+            "location": self.location,
+            "quantity": self.quantity
         }

@@ -7,76 +7,106 @@ class TransferService:
     @staticmethod
     def get_all():
         transfers = Transfer.query.all()
-        return [{"id": t.id, "product_id": t.product_id, "from_warehouse": t.from_warehouse, "to_warehouse": t.to_warehouse, "quantity": t.quantity, "created_at": t.created_at} for t in transfers]
+        return [t.to_dict() for t in transfers]
+
+    @staticmethod
+    def get_by_id(transfer_id):
+        transfer = Transfer.query.get(transfer_id)
+        if not transfer:
+            raise ValueError("Transfer not found")
+        return transfer.to_dict()
 
     @staticmethod
     def create(data):
-        required_fields = ["product_id", "from_warehouse", "to_warehouse", "quantity"]
-        for field in required_fields:
-            if field not in data:
-                raise ValueError(f"Missing required field: {field}")
+        if not data or "from_warehouse_id" not in data or "to_warehouse_id" not in data or "items" not in data:
+            raise ValueError("Missing from_warehouse_id, to_warehouse_id, or items")
 
-        if data["quantity"] <= 0:
-            raise ValueError("Quantity must be greater than zero")
-            
-        if data["from_warehouse"] == data["to_warehouse"]:
+        if data["from_warehouse_id"] == data["to_warehouse_id"]:
             raise ValueError("Source and destination warehouses cannot be the same")
 
-        from_inventory = Inventory.query.filter_by(
-            product_id=data["product_id"],
-            warehouse_id=data["from_warehouse"]
-        ).first()
-
-        if not from_inventory or from_inventory.quantity < data["quantity"]:
-            raise ValueError("Insufficient stock in the source warehouse")
-
-        from_inventory.quantity -= data["quantity"]
-
-        to_inventory = Inventory.query.filter_by(
-            product_id=data["product_id"],
-            warehouse_id=data["to_warehouse"]
-        ).first()
-
-        if to_inventory:
-            to_inventory.quantity += data["quantity"]
-        else:
-            to_inventory = Inventory(
-                product_id=data["product_id"],
-                warehouse_id=data["to_warehouse"],
-                quantity=data["quantity"]
-            )
-            db.session.add(to_inventory)
-
         transfer = Transfer(
-            product_id=data["product_id"],
-            from_warehouse=data["from_warehouse"],
-            to_warehouse=data["to_warehouse"],
-            quantity=data["quantity"]
+            from_warehouse_id=data["from_warehouse_id"],
+            to_warehouse_id=data["to_warehouse_id"],
+            status="draft"
         )
         db.session.add(transfer)
         db.session.flush()
 
-        # Log ledger for source warehouse
-        LedgerService.log_transaction(
-            product_id=data["product_id"],
-            warehouse_id=data["from_warehouse"],
-            operation_type="TRANSFER_OUT",
-            quantity_change=-data["quantity"],
-            reference_id=transfer.id
-        )
-        
-        # Log ledger for destination warehouse
-        LedgerService.log_transaction(
-            product_id=data["product_id"],
-            warehouse_id=data["to_warehouse"],
-            operation_type="TRANSFER_IN",
-            quantity_change=data["quantity"],
-            reference_id=transfer.id
-        )
+        from models.transfer_model import TransferItem
+        for item in data["items"]:
+            if item["quantity"] <= 0:
+                raise ValueError(f"Quantity must be greater than zero for product {item.get('product_id')}")
+            ti = TransferItem(
+                transfer_id=transfer.id,
+                product_id=item["product_id"],
+                quantity=item["quantity"]
+            )
+            db.session.add(ti)
 
-        try:
-            db.session.commit()
-            return {"id": transfer.id, "quantity_transferred": data["quantity"]}
-        except Exception as e:
-            db.session.rollback()
-            raise Exception("Failed to transfer stock")
+        db.session.commit()
+        return Transfer.query.get(transfer.id).to_dict()
+
+    @staticmethod
+    def validate(transfer_id):
+        transfer = Transfer.query.get(transfer_id)
+        if not transfer:
+            raise ValueError("Transfer not found")
+        
+        if transfer.status == "done":
+            raise ValueError("Transfer is already validated")
+
+        from models.inventory_model import Inventory
+        # Check stock from source
+        for item in transfer.items:
+            from_inv = Inventory.query.filter_by(
+                product_id=item.product_id,
+                warehouse_id=transfer.from_warehouse_id
+            ).first()
+
+            if not from_inv or from_inv.quantity < item.quantity:
+                raise ValueError(f"Insufficient stock for product {item.product_id} in source warehouse")
+
+        transfer.status = "done"
+
+        # Transfer stock and log
+        for item in transfer.items:
+            from_inv = Inventory.query.filter_by(
+                product_id=item.product_id,
+                warehouse_id=transfer.from_warehouse_id
+            ).first()
+            from_inv.quantity -= item.quantity
+
+            to_inv = Inventory.query.filter_by(
+                product_id=item.product_id,
+                warehouse_id=transfer.to_warehouse_id
+            ).first()
+
+            if to_inv:
+                to_inv.quantity += item.quantity
+            else:
+                to_inv = Inventory(
+                    product_id=item.product_id,
+                    warehouse_id=transfer.to_warehouse_id,
+                    quantity=item.quantity,
+                    location=""
+                )
+                db.session.add(to_inv)
+
+            LedgerService.log_transaction(
+                product_id=item.product_id,
+                warehouse_id=transfer.from_warehouse_id,
+                operation_type="transfer",
+                quantity_change=-item.quantity,
+                reference_id=transfer.id
+            )
+            
+            LedgerService.log_transaction(
+                product_id=item.product_id,
+                warehouse_id=transfer.to_warehouse_id,
+                operation_type="transfer",
+                quantity_change=item.quantity,
+                reference_id=transfer.id
+            )
+
+        db.session.commit()
+        return transfer.to_dict()

@@ -8,19 +8,27 @@ class LedgerService:
         ledger_entry = StockLedger(
             product_id=product_id,
             warehouse_id=warehouse_id,
-            operation_type=operation_type,
-            quantity_change=quantity_change,
+            type=operation_type,
+            quantity=quantity_change,
             reference_id=reference_id
         )
         db.session.add(ledger_entry)
-        # We don't commit here because it should be committed alongside the main transaction
         
     @staticmethod
-    def get_all():
-        entries = StockLedger.query.order_by(StockLedger.created_at.desc()).all()
+    def get_all(filters=None):
+        query = StockLedger.query
+        
+        if filters:
+            if filters.get("type"):
+                query = query.filter_by(type=filters["type"])
+            if filters.get("warehouse_id"):
+                query = query.filter_by(warehouse_id=filters["warehouse_id"])
+            if filters.get("product_id"):
+                query = query.filter_by(product_id=filters["product_id"])
+
+        entries = query.order_by(StockLedger.created_at.desc()).all()
         return [e.to_dict() for e in entries]
 
     @staticmethod
     def get_by_product(product_id):
-        entries = StockLedger.query.filter_by(product_id=product_id).order_by(StockLedger.created_at.desc()).all()
-        return [e.to_dict() for e in entries]
+        return LedgerService.get_all({"product_id": product_id})

@@ -5,9 +5,9 @@ class Adjustment(db.Model):
 
     id = db.Column(db.Integer, primary_key=True)
     product_id = db.Column(db.Integer, db.ForeignKey("products.id"))
-    warehouse_id = db.Column(db.Integer)
+    warehouse_id = db.Column(db.Integer, db.ForeignKey("warehouses.id"), nullable=False)
 
-    old_quantity = db.Column(db.Integer)
+    previous_quantity = db.Column(db.Integer)
     new_quantity = db.Column(db.Integer)
 
     reason = db.Column(db.String(255))
@@ -15,13 +15,14 @@ class Adjustment(db.Model):
     created_at = db.Column(db.DateTime, server_default=db.func.now())
 
     product = db.relationship("Product")
+    warehouse = db.relationship("Warehouse")
 
     def to_dict(self):
         return {
             "id": self.id,
             "product_id": self.product_id,
             "warehouse_id": self.warehouse_id,
-            "old_quantity": self.old_quantity,
+            "previous_quantity": self.previous_quantity,
             "new_quantity": self.new_quantity,
             "reason": self.reason
         }

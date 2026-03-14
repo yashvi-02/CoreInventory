@@ -1,4 +1,6 @@
 from .user_model import User
+from .category_model import Category
+from .warehouse_model import Warehouse
 from .product_model import Product
 from .receipt_model import Receipt
 from .delivery_model import Delivery

@@ -7,6 +7,6 @@ class Config:
 
     SQLALCHEMY_DATABASE_URI = os.environ.get(
         "DATABASE_URL",
-        "postgresql://postgres:12260613@127.0.0.1:5432/coreinventory"
+        f"sqlite:///{os.path.join(os.path.abspath(os.path.dirname(__file__)), 'coreinventory.db')}"
     )
     SQLALCHEMY_TRACK_MODIFICATIONS = False

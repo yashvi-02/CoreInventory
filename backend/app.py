@@ -6,9 +6,12 @@ from flask_migrate import Migrate
 from sqlalchemy import text
 
 # Import all models so SQLAlchemy registers the tables
-from models import User, Product, Receipt, Delivery, Transfer, Adjustment, StockLedger, Inventory
+from models import User, Category, Warehouse, Product, Receipt, Delivery, Transfer, Adjustment, StockLedger, Inventory
 
 from routes.auth_routes import auth_bp
+from routes.category_routes import category_bp
+from routes.warehouse_routes import warehouse_bp
+from routes.dashboard_routes import dashboard_bp
 from routes.product_routes import product_bp
 from routes.receipt_routes import receipt_bp
 from routes.delivery_routes import delivery_bp
@@ -44,6 +47,9 @@ def create_app():
 
     # Register blueprints
     app.register_blueprint(auth_bp, url_prefix="/api/auth")
+    app.register_blueprint(category_bp, url_prefix="/api/categories")
+    app.register_blueprint(warehouse_bp, url_prefix="/api/warehouses")
+    app.register_blueprint(dashboard_bp, url_prefix="/api/dashboard")
     app.register_blueprint(product_bp, url_prefix="/api/products")
     app.register_blueprint(receipt_bp, url_prefix="/api/receipts")
     app.register_blueprint(delivery_bp, url_prefix="/api/deliveries")

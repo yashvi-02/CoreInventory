@@ -7,47 +7,81 @@ class DeliveryService:
     @staticmethod
     def get_all():
         deliveries = Delivery.query.all()
-        return [{"id": d.id, "customer": d.customer, "created_at": d.created_at} for d in deliveries]
+        return [d.to_dict() for d in deliveries]
+
+    @staticmethod
+    def get_by_id(delivery_id):
+        delivery = Delivery.query.get(delivery_id)
+        if not delivery:
+            raise ValueError("Delivery not found")
+        return delivery.to_dict()
 
     @staticmethod
     def create(data):
-        required_fields = ["customer", "product_id", "warehouse_id", "quantity"]
-        for field in required_fields:
-            if field not in data:
-                raise ValueError(f"Missing required field: {field}")
+        if not data or "customer" not in data or "items" not in data:
+            raise ValueError("Missing customer or items")
 
-        if data["quantity"] <= 0:
-            raise ValueError("Quantity must be greater than zero")
-
-        inventory = Inventory.query.filter_by(
-            product_id=data["product_id"],
-            warehouse_id=data["warehouse_id"]
-        ).first()
-
-        if not inventory or inventory.quantity < data["quantity"]:
-            raise ValueError("Not enough stock in the specified warehouse")
-
-        delivery = Delivery(
-            customer=data["customer"],
-            product_id=data["product_id"],
-            quantity=data["quantity"]
-        )
+        delivery = Delivery(customer=data["customer"], status="draft")
         db.session.add(delivery)
         db.session.flush()
 
-        inventory.quantity -= data["quantity"]
+        from models.delivery_model import DeliveryItem
+        from models.inventory_model import Inventory
         
-        LedgerService.log_transaction(
-            product_id=data["product_id"],
-            warehouse_id=data["warehouse_id"],
-            operation_type="DELIVERY",
-            quantity_change=-data["quantity"], # Negative change for delivery
-            reference_id=delivery.id
-        )
+        # When creating a draft, we might not reduce stock immediately, but we should 
+        # normally check if sufficient stock exists, or we can check during validation.
+        # We will check during validation for simplicity.
+        for item in data["items"]:
+            if item["quantity"] <= 0:
+                raise ValueError(f"Quantity must be greater than zero for product {item.get('product_id')}")
+            di = DeliveryItem(
+                delivery_id=delivery.id,
+                product_id=item["product_id"],
+                quantity=item["quantity"]
+            )
+            db.session.add(di)
 
-        try:
-            db.session.commit()
-            return {"id": delivery.id, "customer": delivery.customer, "quantity": data["quantity"]}
-        except Exception as e:
-            db.session.rollback()
-            raise Exception("Failed to create delivery record")
+        db.session.commit()
+        return Delivery.query.get(delivery.id).to_dict()
+
+    @staticmethod
+    def validate(delivery_id, warehouse_id):
+        delivery = Delivery.query.get(delivery_id)
+        if not delivery:
+            raise ValueError("Delivery not found")
+        
+        if delivery.status == "done":
+            raise ValueError("Delivery is already validated")
+
+        from models.inventory_model import Inventory
+        # Check stock first
+        for item in delivery.items:
+            inventory = Inventory.query.filter_by(
+                product_id=item.product_id,
+                warehouse_id=warehouse_id
+            ).first()
+
+            if not inventory or inventory.quantity < item.quantity:
+                raise ValueError(f"Not enough stock for product {item.product_id} in warehouse {warehouse_id}")
+
+        delivery.status = "done"
+
+        # Deduct stock and log
+        for item in delivery.items:
+            inventory = Inventory.query.filter_by(
+                product_id=item.product_id,
+                warehouse_id=warehouse_id
+            ).first()
+
+            inventory.quantity -= item.quantity
+
+            LedgerService.log_transaction(
+                product_id=item.product_id,
+                warehouse_id=warehouse_id,
+                operation_type="delivery",
+                quantity_change=-item.quantity,
+                reference_id=delivery.id
+            )
+
+        db.session.commit()
+        return delivery.to_dict()
