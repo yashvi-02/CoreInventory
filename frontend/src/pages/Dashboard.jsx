@@ -1,6 +1,4 @@
-import { useState, useEffect } from 'react';
 import { Package, Inbox, AlertTriangle, Activity } from 'lucide-react';
-import { api } from '../services/api';
 import {
   Chart as ChartJS,
   CategoryScale,
@@ -26,34 +24,12 @@ ChartJS.register(
 );
 
 const Dashboard = () => {
-  const [metrics, setMetrics] = useState(null);
-  const [isLoading, setIsLoading] = useState(true);
-  const [error, setError] = useState('');
-
-  useEffect(() => {
-    const fetchDashboardData = async () => {
-      try {
-        const response = await api.get('/dashboard');
-        // Structure expected from backend:
-        // { data: { total_products: X, total_quantity: Y, low_stock_alerts: Z, ... } }
-        setMetrics(response.data || response);
-      } catch (err) {
-        setError('Failed to load dashboard metrics');
-        console.error(err);
-      } finally {
-        setIsLoading(false);
-      }
-    };
-
-    fetchDashboardData();
-  }, []);
-
-  // Format metrics for the UI cards
-  const displayMetrics = [
-    { title: 'Total Products', value: metrics?.total_products || '0', icon: <Package size={24} />, color: 'text-blue-600', bg: 'bg-blue-100', trend: '--', trendUp: true },
-    { title: 'Total Quantity', value: metrics?.total_stock_value || metrics?.total_quantity || '0', icon: <Inbox size={24} />, color: 'text-emerald-600', bg: 'bg-emerald-100', trend: '--', trendUp: true },
-    { title: 'Low Stock Alerts', value: metrics?.low_stock_count || '0', icon: <AlertTriangle size={24} />, color: 'text-rose-600', bg: 'bg-rose-100', trend: '--', trendUp: false },
-    { title: 'Pending Adjustments', value: metrics?.pending_adjustments || '0', icon: <Activity size={24} />, color: 'text-amber-600', bg: 'bg-amber-100', trend: '--', trendUp: true },
+  // Mock data aligned to the user's legacy structure
+  const metrics = [
+    { title: 'Total Products', value: '428', icon: <Package size={24} />, color: 'text-blue-600', bg: 'bg-blue-100', trend: '+12%', trendUp: true },
+    { title: 'Total Quantity', value: '12,450', icon: <Inbox size={24} />, color: 'text-emerald-600', bg: 'bg-emerald-100', trend: '+5%', trendUp: true },
+    { title: 'Low Stock Alerts', value: '14', icon: <AlertTriangle size={24} />, color: 'text-rose-600', bg: 'bg-rose-100', trend: '-2%', trendUp: false },
+    { title: 'Pending Adjustments', value: '7', icon: <Activity size={24} />, color: 'text-amber-600', bg: 'bg-amber-100', trend: '+1', trendUp: true },
   ];
 
   const chartData = {
@@ -92,7 +68,7 @@ const Dashboard = () => {
   ];
 
   return (
-    <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
+    <div className="p-6 space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
       
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
@@ -106,35 +82,25 @@ const Dashboard = () => {
 
       {/* Metrics Cards */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-        {isLoading ? (
-          <div className="col-span-1 sm:col-span-2 lg:col-span-4 p-4 text-center text-slate-500">
-            Loading metrics...
-          </div>
-        ) : error ? (
-          <div className="col-span-1 sm:col-span-2 lg:col-span-4 p-4 text-center text-red-500 bg-red-50 rounded-xl">
-            {error}
-          </div>
-        ) : (
-          displayMetrics.map((metric, idx) => (
-            <div key={idx} className="bg-white rounded-2xl p-6 shadow-sm border border-slate-100 hover:shadow-md transition-shadow">
-              <div className="flex justify-between items-start">
-                <div>
-                  <p className="text-slate-500 text-sm font-medium mb-1">{metric.title}</p>
-                  <h3 className="text-3xl font-bold text-slate-800 tracking-tight">{metric.value}</h3>
-                </div>
-                <div className={`p-3 rounded-xl ${metric.bg} ${metric.color}`}>
-                  {metric.icon}
-                </div>
+        {metrics.map((metric, idx) => (
+          <div key={idx} className="bg-white rounded-2xl p-6 shadow-sm border border-slate-100 hover:shadow-md transition-shadow">
+            <div className="flex justify-between items-start">
+              <div>
+                <p className="text-slate-500 text-sm font-medium mb-1">{metric.title}</p>
+                <h3 className="text-3xl font-bold text-slate-800 tracking-tight">{metric.value}</h3>
               </div>
-              <div className="mt-4 flex items-center gap-2">
-                <span className={`text-sm font-medium ${metric.trendUp ? 'text-emerald-600' : 'text-rose-600'}`}>
-                  {metric.trend}
-                </span>
-                <span className="text-slate-400 text-xs">vs last month</span>
+              <div className={`p-3 rounded-xl ${metric.bg} ${metric.color}`}>
+                {metric.icon}
               </div>
             </div>
-          ))
-        )}
+            <div className="mt-4 flex items-center gap-2">
+              <span className={`text-sm font-medium ${metric.trendUp ? 'text-emerald-600' : 'text-rose-600'}`}>
+                {metric.trend}
+              </span>
+              <span className="text-slate-400 text-xs">vs last month</span>
+            </div>
+          </div>
+        ))}
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">

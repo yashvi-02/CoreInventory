@@ -1,166 +1,139 @@
-import { useState, useEffect } from 'react';
-import { Plus, ArrowLeftRight, CheckCircle, Clock, Trash2 } from 'lucide-react';
-import { api } from '../services/api';
+import { useState } from 'react';
+import { ArrowLeftRight, Search, Filter, CheckCircle2, Clock, Loader2 } from 'lucide-react';
 
 const Transfers = () => {
-  const [transfers, setTransfers] = useState([]);
-  const [products, setProducts] = useState([]);
-  const [warehouses, setWarehouses] = useState([]);
-  const [isLoading, setIsLoading] = useState(true);
-  const [showForm, setShowForm] = useState(false);
-  const [formData, setFormData] = useState({ from_warehouse_id: '', to_warehouse_id: '', items: [{ product_id: '', quantity: '' }] });
+  const [activeTab, setActiveTab] = useState('All');
 
-  useEffect(() => { fetchAll(); }, []);
+  const [transactions] = useState([
+    { id: 'TXN-0001', from: 'Acme Corp', to: 'WH-Main Account', amount: '₹1,25,000', date: '2023-11-25', method: 'NEFT', status: 'Completed' },
+    { id: 'TXN-0002', from: 'Stellar Goods', to: 'WH-East Account', amount: '₹78,500', date: '2023-11-26', method: 'UPI', status: 'Pending' },
+    { id: 'TXN-0003', from: 'Global Tech', to: 'WH-Main Account', amount: '₹2,45,000', date: '2023-11-22', method: 'RTGS', status: 'Completed' },
+    { id: 'TXN-0004', from: 'First Choice Inc', to: 'WH-West Account', amount: '₹54,200', date: '2023-11-26', method: 'NEFT', status: 'In Process' },
+    { id: 'TXN-0005', from: 'Beta Industries', to: 'WH-Main Account', amount: '₹3,10,000', date: '2023-11-20', method: 'RTGS', status: 'Pending' },
+    { id: 'TXN-0006', from: 'Nova Supplies', to: 'WH-East Account', amount: '₹92,750', date: '2023-11-18', method: 'UPI', status: 'In Process' },
+    { id: 'TXN-0007', from: 'Prime Distributors', to: 'WH-Central Account', amount: '₹1,68,000', date: '2023-11-15', method: 'NEFT', status: 'Completed' },
+  ]);
 
-  const fetchAll = async () => {
-    try {
-      setIsLoading(true);
-      const [tRes, pRes, wRes] = await Promise.all([api.get('/transfers'), api.get('/products'), api.get('/warehouses')]);
-      setTransfers(Array.isArray(tRes.data) ? tRes.data : []);
-      setProducts(Array.isArray(pRes.data) ? pRes.data : []);
-      setWarehouses(Array.isArray(wRes.data) ? wRes.data : []);
-    } catch { /* silent */ } finally { setIsLoading(false); }
+  const tabs = ['All', 'Pending', 'In Process', 'Completed'];
+
+  const filtered = activeTab === 'All' ? transactions : transactions.filter(t => t.status === activeTab);
+
+  const statusIcon = (status) => {
+    if (status === 'Completed') return <CheckCircle2 size={14} className="text-emerald-500" />;
+    if (status === 'In Process') return <Loader2 size={14} className="text-blue-500 animate-spin" />;
+    return <Clock size={14} className="text-amber-500" />;
   };
 
-  const addItem = () => setFormData({...formData, items: [...formData.items, { product_id: '', quantity: '' }]});
-  const removeItem = (idx) => setFormData({...formData, items: formData.items.filter((_, i) => i !== idx)});
-  const updateItem = (idx, field, val) => {
-    const items = [...formData.items];
-    items[idx][field] = val;
-    setFormData({...formData, items});
+  const statusStyle = (status) => {
+    if (status === 'Completed') return 'bg-emerald-50 text-emerald-700 border-emerald-200';
+    if (status === 'In Process') return 'bg-blue-50 text-blue-700 border-blue-200';
+    return 'bg-amber-50 text-amber-700 border-amber-200';
   };
 
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-    try {
-      await api.post('/transfers', {
-        from_warehouse_id: parseInt(formData.from_warehouse_id),
-        to_warehouse_id: parseInt(formData.to_warehouse_id),
-        items: formData.items.map(i => ({ product_id: parseInt(i.product_id), quantity: parseInt(i.quantity) }))
-      });
-      setShowForm(false);
-      setFormData({ from_warehouse_id: '', to_warehouse_id: '', items: [{ product_id: '', quantity: '' }] });
-      fetchAll();
-    } catch (err) { alert('Failed: ' + err.message); }
-  };
-
-  const validateTransfer = async (id) => {
-    try {
-      await api.post(`/transfers/${id}/validate`);
-      fetchAll();
-    } catch (err) { alert('Failed: ' + err.message); }
-  };
-
-  const statusBadge = (s) => {
-    const colors = { draft: 'bg-slate-100 text-slate-700 border-slate-200', done: 'bg-emerald-50 text-emerald-700 border-emerald-200' };
-    return colors[s] || colors.draft;
-  };
+  // Summary counts
+  const pending = transactions.filter(t => t.status === 'Pending').length;
+  const inProcess = transactions.filter(t => t.status === 'In Process').length;
+  const completed = transactions.filter(t => t.status === 'Completed').length;
 
   return (
-    <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
+    <div className="p-6 space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
+
+      {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-bold text-slate-800 tracking-tight">Transfers</h1>
-          <p className="text-slate-500 text-sm mt-1">Move stock between warehouses.</p>
-        </div>
-        <button onClick={() => setShowForm(!showForm)}
-          className="self-start sm:self-auto flex items-center gap-2 bg-blue-600 text-white px-4 py-2.5 rounded-xl text-sm font-semibold shadow-md shadow-blue-500/20 hover:bg-blue-700 transition-all duration-300">
-          <Plus size={18} /> New Transfer
-        </button>
-      </div>
-
-      <div className={`overflow-hidden transition-all duration-500 ease-in-out ${showForm ? 'max-h-[800px] opacity-100 mb-6' : 'max-h-0 opacity-0'}`}>
-        <div className="bg-white rounded-2xl p-6 shadow-sm border border-slate-200">
-          <h2 className="text-lg font-bold text-slate-800 mb-4">New Transfer</h2>
-          <form onSubmit={handleSubmit} className="space-y-4">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div>
-                <label className="block text-sm font-medium text-slate-700 mb-1">From Warehouse *</label>
-                <select value={formData.from_warehouse_id} onChange={e => setFormData({...formData, from_warehouse_id: e.target.value})} required
-                  className="w-full px-4 py-2 bg-slate-50 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500/50 transition-colors cursor-pointer">
-                  <option value="">Select</option>
-                  {warehouses.map(w => <option key={w.id} value={w.id}>{w.name}</option>)}
-                </select>
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-slate-700 mb-1">To Warehouse *</label>
-                <select value={formData.to_warehouse_id} onChange={e => setFormData({...formData, to_warehouse_id: e.target.value})} required
-                  className="w-full px-4 py-2 bg-slate-50 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500/50 transition-colors cursor-pointer">
-                  <option value="">Select</option>
-                  {warehouses.map(w => <option key={w.id} value={w.id}>{w.name}</option>)}
-                </select>
-              </div>
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-slate-700 mb-2">Items</label>
-              {formData.items.map((item, idx) => (
-                <div key={idx} className="flex gap-3 mb-2">
-                  <select value={item.product_id} onChange={e => updateItem(idx, 'product_id', e.target.value)} required
-                    className="flex-1 px-4 py-2 bg-slate-50 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500/50 transition-colors cursor-pointer">
-                    <option value="">Select Product</option>
-                    {products.map(p => <option key={p.id} value={p.id}>{p.name}</option>)}
-                  </select>
-                  <input type="number" value={item.quantity} onChange={e => updateItem(idx, 'quantity', e.target.value)} required min="1" placeholder="Qty"
-                    className="w-24 px-4 py-2 bg-slate-50 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500/50 transition-colors" />
-                  {formData.items.length > 1 && <button type="button" onClick={() => removeItem(idx)} className="p-2 text-rose-500 hover:bg-rose-50 rounded-lg"><Trash2 size={18} /></button>}
-                </div>
-              ))}
-              <button type="button" onClick={addItem} className="text-sm text-blue-600 hover:text-blue-700 font-medium mt-1">+ Add Item</button>
-            </div>
-            <div className="flex justify-end gap-3 mt-4">
-              <button type="button" onClick={() => setShowForm(false)} className="px-4 py-2 text-slate-600 bg-white border border-slate-200 rounded-lg hover:bg-slate-50 transition-colors">Cancel</button>
-              <button type="submit" className="bg-blue-600 text-white px-6 py-2 rounded-lg font-medium shadow-sm hover:bg-blue-700 transition-colors">Create Draft</button>
-            </div>
-          </form>
+          <h1 className="text-2xl font-bold text-slate-800 tracking-tight flex items-center gap-2">
+            <ArrowLeftRight className="text-blue-600" /> Transfers
+          </h1>
+          <p className="text-slate-500 text-sm mt-1">Track money transactions and payment statuses.</p>
         </div>
       </div>
 
+      {/* Summary Cards */}
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+        <div className="bg-amber-50 border border-amber-200 rounded-2xl p-5 flex items-center gap-4">
+          <div className="p-3 bg-amber-100 rounded-xl"><Clock size={24} className="text-amber-600" /></div>
+          <div>
+            <p className="text-sm text-amber-700 font-medium">Pending</p>
+            <p className="text-2xl font-bold text-amber-800">{pending}</p>
+          </div>
+        </div>
+        <div className="bg-blue-50 border border-blue-200 rounded-2xl p-5 flex items-center gap-4">
+          <div className="p-3 bg-blue-100 rounded-xl"><Loader2 size={24} className="text-blue-600" /></div>
+          <div>
+            <p className="text-sm text-blue-700 font-medium">In Process</p>
+            <p className="text-2xl font-bold text-blue-800">{inProcess}</p>
+          </div>
+        </div>
+        <div className="bg-emerald-50 border border-emerald-200 rounded-2xl p-5 flex items-center gap-4">
+          <div className="p-3 bg-emerald-100 rounded-xl"><CheckCircle2 size={24} className="text-emerald-600" /></div>
+          <div>
+            <p className="text-sm text-emerald-700 font-medium">Completed</p>
+            <p className="text-2xl font-bold text-emerald-800">{completed}</p>
+          </div>
+        </div>
+      </div>
+
+      {/* Table */}
       <div className="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden">
+
+        {/* Toolbar */}
+        <div className="p-4 border-b border-slate-100 flex flex-col sm:flex-row justify-between items-center gap-4 bg-slate-50/50">
+          {/* Tabs */}
+          <div className="flex items-center gap-1 bg-slate-100 p-1 rounded-lg border border-slate-200">
+            {tabs.map(tab => (
+              <button
+                key={tab}
+                onClick={() => setActiveTab(tab)}
+                className={`px-4 py-1.5 rounded-md text-sm font-medium transition-colors ${activeTab === tab ? 'bg-white shadow-sm text-blue-600' : 'text-slate-500 hover:text-slate-700'}`}
+              >
+                {tab}
+              </button>
+            ))}
+          </div>
+
+          <div className="flex items-center gap-3">
+            <div className="relative group">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-blue-500 transition-colors" size={16} />
+              <input type="text" placeholder="Search transactions..." className="pl-9 pr-4 py-2 bg-white border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/50 transition-all w-56" />
+            </div>
+            <button className="flex items-center gap-2 px-4 py-2 bg-white border border-slate-200 rounded-lg text-sm text-slate-600 hover:bg-slate-50 transition-colors">
+              <Filter size={16} /> Filter
+            </button>
+          </div>
+        </div>
+
         <div className="overflow-x-auto">
           <table className="w-full text-left border-collapse">
             <thead>
-              <tr className="bg-slate-50/80 border-b border-slate-200 text-slate-500 text-sm">
-                <th className="px-6 py-4 font-semibold">ID</th>
-                <th className="px-6 py-4 font-semibold">From → To</th>
-                <th className="px-6 py-4 font-semibold">Items</th>
-                <th className="px-6 py-4 font-semibold">Status</th>
+              <tr className="bg-slate-50 border-b border-slate-200 text-slate-600 text-sm">
+                <th className="px-6 py-4 font-semibold">Transaction ID</th>
+                <th className="px-6 py-4 font-semibold">From</th>
+                <th className="px-6 py-4 font-semibold">To</th>
+                <th className="px-6 py-4 font-semibold">Amount</th>
+                <th className="px-6 py-4 font-semibold">Method</th>
                 <th className="px-6 py-4 font-semibold">Date</th>
-                <th className="px-6 py-4 font-semibold text-right">Actions</th>
+                <th className="px-6 py-4 font-semibold">Status</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100 text-sm">
-              {isLoading ? (
-                <tr><td colSpan="6" className="px-6 py-12 text-center text-slate-500">Loading...</td></tr>
-              ) : transfers.length === 0 ? (
-                <tr><td colSpan="6" className="px-6 py-12 text-center text-slate-500">
-                  <ArrowLeftRight size={48} className="mx-auto text-slate-300 mb-4" /><p className="text-lg font-medium text-slate-700">No transfers yet</p>
-                </td></tr>
-              ) : transfers.map(t => {
-                const fromWh = warehouses.find(w => w.id === t.from_warehouse_id);
-                const toWh = warehouses.find(w => w.id === t.to_warehouse_id);
-                return (
-                  <tr key={t.id} className="hover:bg-blue-50/30 transition-colors group">
-                    <td className="px-6 py-4 font-medium text-slate-800">TRF-{String(t.id).padStart(4, '0')}</td>
-                    <td className="px-6 py-4 text-slate-600">{fromWh?.name || `WH#${t.from_warehouse_id}`} → {toWh?.name || `WH#${t.to_warehouse_id}`}</td>
-                    <td className="px-6 py-4 text-slate-600">{(t.items || []).length} items</td>
-                    <td className="px-6 py-4">
-                      <span className={`inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium border ${statusBadge(t.status)}`}>
-                        {t.status === 'done' ? <CheckCircle size={14} className="mr-1" /> : <Clock size={14} className="mr-1" />}
-                        {t.status}
-                      </span>
-                    </td>
-                    <td className="px-6 py-4 text-slate-500">{t.created_at ? new Date(t.created_at).toLocaleDateString() : '--'}</td>
-                    <td className="px-6 py-4 text-right">
-                      {t.status === 'draft' && (
-                        <button onClick={() => validateTransfer(t.id)}
-                          className="text-sm text-emerald-600 hover:text-emerald-700 font-medium opacity-0 group-hover:opacity-100 transition-opacity">
-                          Validate
-                        </button>
-                      )}
-                    </td>
-                  </tr>
-                );
-              })}
+              {filtered.map(txn => (
+                <tr key={txn.id} className="hover:bg-blue-50/30 transition-colors">
+                  <td className="px-6 py-4 font-medium text-blue-600">{txn.id}</td>
+                  <td className="px-6 py-4 text-slate-800 font-medium">{txn.from}</td>
+                  <td className="px-6 py-4 text-slate-600">{txn.to}</td>
+                  <td className="px-6 py-4 font-semibold text-slate-800">{txn.amount}</td>
+                  <td className="px-6 py-4 text-slate-500">{txn.method}</td>
+                  <td className="px-6 py-4 text-slate-600">{txn.date}</td>
+                  <td className="px-6 py-4">
+                    <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium border ${statusStyle(txn.status)}`}>
+                      {statusIcon(txn.status)} {txn.status}
+                    </span>
+                  </td>
+                </tr>
+              ))}
+              {filtered.length === 0 && (
+                <tr><td colSpan="7" className="px-6 py-12 text-center text-slate-400">No transactions found.</td></tr>
+              )}
             </tbody>
           </table>
         </div>

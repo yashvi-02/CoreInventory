@@ -1,36 +1,22 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Package, Lock, Mail, ArrowRight } from 'lucide-react';
-import { api } from '../services/api';
 
 const Login = () => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [isLoading, setIsLoading] = useState(false);
-  const [errorMsg, setErrorMsg] = useState('');
   const navigate = useNavigate();
 
-  const handleLogin = async (e) => {
+  const handleLogin = (e) => {
     e.preventDefault();
     setIsLoading(true);
-    setErrorMsg('');
     
-    try {
-      const response = await api.post('/auth/login', { email, password });
-      
-      // Assume the backend returns a token in the 'access_token' or 'token' field
-      // The exact field name depends on AuthService.login returned payload
-      const token = response.data?.access_token || response.data?.token || response.access_token || response.token;
-      
-      if (token) {
-        localStorage.setItem('token', token);
-      }
-      navigate('/dashboard');
-    } catch (err) {
-      setErrorMsg(err.message || 'Login failed. Please check your credentials.');
-    } finally {
+    // Simulate API call
+    setTimeout(() => {
       setIsLoading(false);
-    }
+      navigate('/dashboard');
+    }, 1000);
   };
 
   return (
@@ -102,12 +88,6 @@ const Login = () => {
             </div>
           </div>
 
-          {errorMsg && (
-            <div className="p-3 bg-red-50 text-red-600 border border-red-200 rounded-lg text-sm text-center">
-              {errorMsg}
-            </div>
-          )}
-
           <button
             type="submit"
             disabled={isLoading}
@@ -131,7 +111,7 @@ const Login = () => {
         <div className="mt-8 text-center">
           <p className="text-sm text-slate-500">
             Don't have an account?{' '}
-            <a href="/register" className="font-medium text-blue-600 hover:text-blue-500 transition-colors">
+            <a href="#" className="font-medium text-blue-600 hover:text-blue-500 transition-colors">
               Sign up
             </a>
           </p>
