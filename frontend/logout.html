@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Logout</title>
+
+<style>
+
+body{
+margin:0;
+font-family:Arial, Helvetica, sans-serif;
+background:#f4f6fb;
+display:flex;
+justify-content:center;
+align-items:center;
+height:100vh;
+}
+
+/* Logout Card */
+
+.logout-box{
+background:white;
+padding:40px;
+border-radius:10px;
+box-shadow:0 4px 12px rgba(0,0,0,0.15);
+text-align:center;
+width:400px;
+}
+
+.logout-box h1{
+color:#0b3d91;
+margin-bottom:10px;
+}
+
+.logout-box p{
+color:#555;
+margin-bottom:25px;
+}
+
+/* Buttons */
+
+.btn{
+padding:12px 20px;
+border:none;
+border-radius:6px;
+cursor:pointer;
+font-size:15px;
+margin:5px;
+}
+
+.login-btn{
+background:#0b3d91;
+color:white;
+}
+
+.login-btn:hover{
+background:#072c6a;
+}
+
+.home-btn{
+background:#ccc;
+}
+
+</style>
+
+</head>
+
+<body>
+
+<div class="logout-box">
+
+<h1>Logged Out</h1>
+
+<p>You have successfully logged out of your account.</p>
+
+<button class="btn login-btn" onclick="goLogin()">Login Again</button>
+
+<button class="btn home-btn" onclick="goHome()">Go Home</button>
+
+</div>
+
+<script>
+
+function goLogin(){
+window.location.href="login.html"
+}
+
+function goHome(){
+window.location.href="index.html"
+}
+
+</script>
+
+</body>
+</html>

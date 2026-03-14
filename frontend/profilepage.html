@@ -1,0 +1,353 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Interactive Profile Page</title>
+
+<style>
+
+body{
+    margin:0;
+    font-family:Arial, Helvetica, sans-serif;
+    background:#f4f6fb;
+}
+
+/* Header */
+
+.header{
+    background:#0b3d91;
+    color:white;
+    padding:18px;
+    text-align:center;
+    font-size:24px;
+    font-weight:bold;
+}
+
+/* Profile Container */
+
+.profile-container{
+    width:600px;
+    margin:40px auto;
+    background:white;
+    border-radius:10px;
+    box-shadow:0 4px 12px rgba(0,0,0,0.15);
+    padding:30px;
+}
+
+/* Profile Image */
+
+.profile-img{
+    display:block;
+    margin:0 auto;
+    width:120px;
+    height:120px;
+    border-radius:50%;
+    border:4px solid #0b3d91;
+    object-fit:cover;
+}
+
+/* Upload */
+
+.upload{
+    text-align:center;
+    margin-top:10px;
+}
+
+/* Name */
+
+.name{
+    text-align:center;
+    font-size:24px;
+    margin-top:15px;
+    font-weight:bold;
+    color:#0b3d91;
+}
+
+/* Info Rows */
+
+.info{
+    margin-top:25px;
+}
+
+.info-row{
+    display:flex;
+    justify-content:space-between;
+    padding:12px 0;
+    border-bottom:1px solid #ddd;
+    align-items:center;
+}
+
+.label{
+    font-weight:bold;
+    color:#333;
+}
+
+.value{
+    color:#555;
+}
+
+input, select{
+    padding:6px;
+    border:1px solid #ccc;
+    border-radius:4px;
+}
+
+/* Phone edit layout */
+
+.phone-edit{
+    display:flex;
+    gap:8px;
+}
+
+/* Buttons */
+
+.buttons{
+    text-align:center;
+    margin-top:25px;
+}
+
+.btn{
+    padding:10px 18px;
+    border:none;
+    border-radius:6px;
+    background:#0b3d91;
+    color:white;
+    font-size:14px;
+    cursor:pointer;
+    margin:5px;
+}
+
+.btn:hover{
+    background:#072c6a;
+}
+
+.hidden{
+    display:none;
+}
+
+</style>
+</head>
+
+<body>
+
+<div class="header">User Profile</div>
+
+<div class="profile-container">
+
+<img src="https://via.placeholder.com/120" id="profileImage" class="profile-img">
+
+<div class="upload hidden" id="uploadBox">
+<input type="file" id="imageUpload">
+</div>
+
+<div class="name" id="nameText">John Doe</div>
+
+<div class="info">
+
+<div class="info-row">
+<span class="label">Email</span>
+<span class="value" id="emailText">john@email.com</span>
+</div>
+
+<!-- PHONE SECTION -->
+
+<div class="info-row">
+
+<span class="label">Phone</span>
+
+<span class="value" id="phoneText">+91 9876543210</span>
+
+<div id="phoneEdit" class="phone-edit hidden">
+
+<select id="countryCode">
+<option value="+91">+91 (India)</option>
+<option value="+1">+1 (USA)</option>
+<option value="+44">+44 (UK)</option>
+<option value="+61">+61 (Australia)</option>
+<option value="+971">+971 (UAE)</option>
+<option value="+81">+81 (Japan)</option>
+<option value="+49">+49 (Germany)</option>
+<option value="+33">+33 (France)</option>
+</select>
+
+<input type="text" id="phoneNumber" placeholder="Enter number">
+
+</div>
+
+</div>
+
+<div class="info-row">
+<span class="label">Role</span>
+<span class="value" id="roleText">Administrator</span>
+</div>
+
+<div class="info-row">
+<span class="label">Location</span>
+<span class="value" id="locationText">Ahmedabad</span>
+</div>
+
+</div>
+
+<div class="buttons">
+
+<button class="btn" id="editBtn">Edit Profile</button>
+
+<button class="btn hidden" id="saveBtn">Save</button>
+<button class="btn hidden" id="cancelBtn">Cancel</button>
+
+</div>
+
+</div>
+
+<script>
+
+let oldValues={}
+
+/* EDIT BUTTON */
+
+document.getElementById("editBtn").onclick=function(){
+
+oldValues.name=document.getElementById("nameText").innerText
+oldValues.email=document.getElementById("emailText").innerText
+oldValues.role=document.getElementById("roleText").innerText
+oldValues.location=document.getElementById("locationText").innerText
+
+// convert text to input
+
+replaceInput("nameText")
+replaceInput("emailText")
+replaceInput("roleText")
+replaceInput("locationText")
+
+// phone edit
+
+document.getElementById("phoneText").classList.add("hidden")
+document.getElementById("phoneEdit").classList.remove("hidden")
+
+// split existing number
+
+let phone=document.getElementById("phoneText").innerText.split(" ")
+document.getElementById("countryCode").value=phone[0]
+document.getElementById("phoneNumber").value=phone[1]
+
+document.getElementById("uploadBox").classList.remove("hidden")
+
+document.getElementById("editBtn").classList.add("hidden")
+document.getElementById("saveBtn").classList.remove("hidden")
+document.getElementById("cancelBtn").classList.remove("hidden")
+
+}
+
+/* SAVE */
+
+document.getElementById("saveBtn").onclick=function(){
+
+restoreSpan("nameText","name")
+restoreSpan("emailText")
+restoreSpan("roleText")
+restoreSpan("locationText")
+
+// phone save
+
+let code=document.getElementById("countryCode").value
+let num=document.getElementById("phoneNumber").value
+
+document.getElementById("phoneText").innerText=code+" "+num
+
+document.getElementById("phoneText").classList.remove("hidden")
+document.getElementById("phoneEdit").classList.add("hidden")
+
+document.getElementById("uploadBox").classList.add("hidden")
+
+document.getElementById("editBtn").classList.remove("hidden")
+document.getElementById("saveBtn").classList.add("hidden")
+document.getElementById("cancelBtn").classList.add("hidden")
+
+}
+
+/* CANCEL */
+
+document.getElementById("cancelBtn").onclick=function(){
+
+restoreOld("nameText","name")
+restoreOld("emailText")
+restoreOld("roleText")
+restoreOld("locationText")
+
+document.getElementById("phoneEdit").classList.add("hidden")
+document.getElementById("phoneText").classList.remove("hidden")
+
+document.getElementById("uploadBox").classList.add("hidden")
+
+document.getElementById("editBtn").classList.remove("hidden")
+document.getElementById("saveBtn").classList.add("hidden")
+document.getElementById("cancelBtn").classList.add("hidden")
+
+}
+
+/* FUNCTIONS */
+
+function replaceInput(id){
+
+let el=document.getElementById(id)
+
+let input=document.createElement("input")
+input.value=el.innerText
+input.id=id+"Input"
+
+el.replaceWith(input)
+
+}
+
+function restoreSpan(id,type){
+
+let input=document.getElementById(id+"Input")
+
+let span=document.createElement("span")
+
+span.id=id
+span.innerText=input.value
+
+span.className= type==="name" ? "name" : "value"
+
+input.replaceWith(span)
+
+}
+
+function restoreOld(id,type){
+
+let input=document.getElementById(id+"Input")
+
+let span=document.createElement("span")
+
+span.id=id
+span.innerText=oldValues[id.replace("Text","")]
+
+span.className= type==="name" ? "name" : "value"
+
+input.replaceWith(span)
+
+}
+
+/* Image preview */
+
+document.getElementById("imageUpload").onchange=function(e){
+
+const file=e.target.files[0]
+
+if(file){
+const reader=new FileReader()
+
+reader.onload=function(event){
+document.getElementById("profileImage").src=event.target.result
+}
+
+reader.readAsDataURL(file)
+}
+
+}
+
+</script>
+
+</body>
+</html>

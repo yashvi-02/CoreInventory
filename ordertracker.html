@@ -1,0 +1,253 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Interactive Order Tracker</title>
+
+<style>
+
+body{
+margin:0;
+font-family:Arial, Helvetica, sans-serif;
+background:#f4f6fb;
+}
+
+/* Navbar */
+
+.navbar{
+background:#0b3d91;
+color:white;
+padding:18px;
+font-size:22px;
+text-align:center;
+font-weight:bold;
+}
+
+/* Container */
+
+.container{
+width:700px;
+margin:50px auto;
+}
+
+/* Card */
+
+.card{
+background:white;
+padding:30px;
+border-radius:10px;
+box-shadow:0 4px 12px rgba(0,0,0,0.15);
+}
+
+/* Inputs */
+
+.form-row{
+margin-bottom:15px;
+}
+
+input, select{
+width:100%;
+padding:10px;
+border:1px solid #ccc;
+border-radius:6px;
+}
+
+/* Button */
+
+.btn{
+padding:10px 18px;
+background:#0b3d91;
+color:white;
+border:none;
+border-radius:6px;
+cursor:pointer;
+margin-top:10px;
+}
+
+.btn:hover{
+background:#072c6a;
+}
+
+/* Tracker */
+
+.tracker{
+display:flex;
+justify-content:space-between;
+margin-top:40px;
+position:relative;
+}
+
+.tracker::before{
+content:"";
+position:absolute;
+top:15px;
+left:0;
+right:0;
+height:4px;
+background:#ddd;
+z-index:0;
+}
+
+.step{
+text-align:center;
+position:relative;
+z-index:1;
+}
+
+.circle{
+width:32px;
+height:32px;
+border-radius:50%;
+background:#ccc;
+margin:auto;
+line-height:32px;
+color:white;
+font-weight:bold;
+}
+
+.active{
+background:#0b3d91;
+}
+
+.step p{
+margin-top:8px;
+font-size:14px;
+}
+
+.order-info{
+margin-top:25px;
+font-size:16px;
+}
+
+.hidden{
+display:none;
+}
+
+</style>
+</head>
+
+<body>
+
+<div class="navbar">Order Tracker</div>
+
+<div class="container">
+
+<div class="card">
+
+<h2>Track Order</h2>
+
+<div class="form-row">
+<label>Order ID</label>
+<input type="text" id="orderId" placeholder="Enter Order ID">
+</div>
+
+<div class="form-row">
+<label>Select Order Status</label>
+
+<select id="orderStatus">
+
+<option value="Ordered">Ordered</option>
+<option value="Packed">Packed</option>
+<option value="Shipped">Shipped</option>
+<option value="Delivered">Delivered</option>
+
+</select>
+
+</div>
+
+<button class="btn" onclick="trackOrder()">Track Order</button>
+
+<div id="result" class="hidden">
+
+<div class="order-info">
+<b>Order ID:</b> <span id="oid"></span><br><br>
+<b>Status:</b> <span id="status"></span>
+</div>
+
+<div class="tracker">
+
+<div class="step">
+<div class="circle" id="step1">1</div>
+<p>Ordered</p>
+</div>
+
+<div class="step">
+<div class="circle" id="step2">2</div>
+<p>Packed</p>
+</div>
+
+<div class="step">
+<div class="circle" id="step3">3</div>
+<p>Shipped</p>
+</div>
+
+<div class="step">
+<div class="circle" id="step4">4</div>
+<p>Delivered</p>
+</div>
+
+</div>
+
+</div>
+
+</div>
+
+</div>
+
+<script>
+
+function trackOrder(){
+
+let id=document.getElementById("orderId").value
+let status=document.getElementById("orderStatus").value
+
+if(id===""){
+alert("Please enter Order ID")
+return
+}
+
+document.getElementById("result").classList.remove("hidden")
+
+document.getElementById("oid").innerText=id
+document.getElementById("status").innerText=status
+
+resetSteps()
+
+if(status==="Ordered"){
+activate(1)
+}
+
+if(status==="Packed"){
+activate(1)
+activate(2)
+}
+
+if(status==="Shipped"){
+activate(1)
+activate(2)
+activate(3)
+}
+
+if(status==="Delivered"){
+activate(1)
+activate(2)
+activate(3)
+activate(4)
+}
+
+}
+
+function activate(step){
+document.getElementById("step"+step).classList.add("active")
+}
+
+function resetSteps(){
+for(let i=1;i<=4;i++){
+document.getElementById("step"+i).classList.remove("active")
+}
+}
+
+</script>
+
+</body>
+</html>
