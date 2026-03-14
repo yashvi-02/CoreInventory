@@ -9,7 +9,7 @@ class Inventory(db.Model):
 
     quantity = db.Column(db.Integer, default=0)
 
-    location = db.Column(db.String(100), default="Main Warehouse")
+    warehouse_id = db.Column(db.Integer)
 
     updated_at = db.Column(db.DateTime, server_default=db.func.now(), onupdate=db.func.now())
 
@@ -20,5 +20,5 @@ class Inventory(db.Model):
             "id": self.id,
             "product_id": self.product_id,
             "quantity": self.quantity,
-            "location": self.location
+            "warehouse_id": self.warehouse_id
         }

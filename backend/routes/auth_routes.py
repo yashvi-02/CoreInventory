@@ -1,44 +1,37 @@
 from flask import Blueprint, request, jsonify
-from models.user_model import User
-from extensions.db import db
-from passlib.hash import bcrypt
+from services.auth_service import AuthService
+from utils.response import success_response, error_response
 
 auth_bp = Blueprint("auth", __name__)
 
-@auth_bp.route("/register", methods=["POST"])
+@auth_bp.route("/register", methods=["POST"], strict_slashes=False)
 def register():
-
     data = request.json
+    if not data:
+        return error_response("Missing JSON payload", 400)
+        
+    try:
+        user = AuthService.register(data)
+        return success_response({"id": user.id}, "User registered successfully", 201)
+    except ValueError as e:
+        return error_response(str(e), 400)
+    except FileExistsError as e:
+        return error_response(str(e), 409)
+    except Exception as e:
+        return error_response(str(e), 500)
 
-    hashed_password = bcrypt.hash(data["password"])
-
-    user = User(
-        name=data["name"],
-        email=data["email"],
-        password_hash=hashed_password,
-        role=data["role"]
-    )
-
-    db.session.add(user)
-    db.session.commit()
-
-    return jsonify({"message": "User registered"})
-
-
-@auth_bp.route("/login", methods=["POST"])
+@auth_bp.route("/login", methods=["POST"], strict_slashes=False)
 def login():
-
     data = request.json
+    if not data:
+        return error_response("Missing JSON payload", 400)
 
-    user = User.query.filter_by(email=data["email"]).first()
-
-    if not user:
-        return jsonify({"error": "User not found"}), 404
-
-    if not bcrypt.verify(data["password"], user.password_hash):
-        return jsonify({"error": "Invalid password"}), 401
-
-    return jsonify({
-        "message": "Login successful",
-        "role": user.role
-    })
+    try:
+        result = AuthService.login(data)
+        return success_response(result, "Login successful", 200)
+    except ValueError as e:
+        return error_response(str(e), 400)
+    except PermissionError as e:
+        return error_response(str(e), 401)
+    except Exception as e:
+        return error_response("Failed to login", 500)

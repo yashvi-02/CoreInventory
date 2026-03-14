@@ -6,9 +6,10 @@ class StockLedger(db.Model):
     id = db.Column(db.Integer, primary_key=True)
 
     product_id = db.Column(db.Integer, db.ForeignKey("products.id"), nullable=False)
+    warehouse_id = db.Column(db.Integer)
 
-    transaction_type = db.Column(db.String(50))
-    quantity = db.Column(db.Integer)
+    operation_type = db.Column(db.String(50))
+    quantity_change = db.Column(db.Integer)
 
     reference_id = db.Column(db.Integer)
 
@@ -20,7 +21,8 @@ class StockLedger(db.Model):
         return {
             "id": self.id,
             "product_id": self.product_id,
-            "transaction_type": self.transaction_type,
-            "quantity": self.quantity,
+            "warehouse_id": self.warehouse_id,
+            "operation_type": self.operation_type,
+            "quantity_change": self.quantity_change,
             "reference_id": self.reference_id,
         }

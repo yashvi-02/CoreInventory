@@ -1,50 +1,31 @@
-from flask import Blueprint, request, jsonify
-from models.transfer_model import Transfer
-from models.inventory_model import Inventory
-from extensions.db import db
+from flask import Blueprint, request
+from flask_jwt_extended import jwt_required
+from services.transfer_service import TransferService
+from utils.response import success_response, error_response
 
 transfer_bp = Blueprint("transfers", __name__)
 
+@transfer_bp.route("", methods=["GET"], strict_slashes=False)
+@jwt_required()
+def get_transfers():
+    try:
+        transfers = TransferService.get_all()
+        return success_response(transfers, "Fetched all transfers", 200)
+    except Exception as e:
+        return error_response(str(e), 500)
 
-@transfer_bp.route("/", methods=["POST"])
-def transfer_stock():
 
+@transfer_bp.route("", methods=["POST"], strict_slashes=False)
+@jwt_required()
+def create_transfer():
     data = request.json
+    if not data:
+        return error_response("Missing JSON payload", 400)
 
-    from_inventory = Inventory.query.filter_by(
-        product_id=data["product_id"],
-        warehouse_id=data["from_warehouse"]
-    ).first()
-
-    if not from_inventory or from_inventory.quantity < data["quantity"]:
-        return jsonify({"error": "Insufficient stock"}), 400
-
-    from_inventory.quantity -= data["quantity"]
-
-    to_inventory = Inventory.query.filter_by(
-        product_id=data["product_id"],
-        warehouse_id=data["to_warehouse"]
-    ).first()
-
-    if to_inventory:
-        to_inventory.quantity += data["quantity"]
-    else:
-        to_inventory = Inventory(
-            product_id=data["product_id"],
-            warehouse_id=data["to_warehouse"],
-            quantity=data["quantity"]
-        )
-        db.session.add(to_inventory)
-
-    transfer = Transfer(
-        product_id=data["product_id"],
-        from_warehouse=data["from_warehouse"],
-        to_warehouse=data["to_warehouse"],
-        quantity=data["quantity"]
-    )
-
-    db.session.add(transfer)
-
-    db.session.commit()
-
-    return jsonify({"message": "Transfer successful"})
+    try:
+        transfer = TransferService.create(data)
+        return success_response(transfer, "Stock transferred successfully", 201)
+    except ValueError as e:
+        return error_response(str(e), 400)
+    except Exception as e:
+        return error_response(str(e), 500)

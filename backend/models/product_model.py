@@ -8,6 +8,7 @@ class Product(db.Model):
     sku = db.Column(db.String(100), unique=True, nullable=False)
     quantity = db.Column(db.Integer, default=0)
     price = db.Column(db.Float)
+    category = db.Column(db.String(100))
 
     created_at = db.Column(db.DateTime, server_default=db.func.now())
 
@@ -17,5 +18,6 @@ class Product(db.Model):
             "name": self.name,
             "sku": self.sku,
             "quantity": self.quantity,
-            "price": self.price
+            "price": self.price,
+            "category": self.category
         }

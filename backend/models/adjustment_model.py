@@ -5,9 +5,10 @@ class Adjustment(db.Model):
 
     id = db.Column(db.Integer, primary_key=True)
     product_id = db.Column(db.Integer, db.ForeignKey("products.id"))
+    warehouse_id = db.Column(db.Integer)
 
-    adjustment_type = db.Column(db.String(50))
-    quantity = db.Column(db.Integer)
+    old_quantity = db.Column(db.Integer)
+    new_quantity = db.Column(db.Integer)
 
     reason = db.Column(db.String(255))
 
@@ -19,7 +20,8 @@ class Adjustment(db.Model):
         return {
             "id": self.id,
             "product_id": self.product_id,
-            "adjustment_type": self.adjustment_type,
-            "quantity": self.quantity,
+            "warehouse_id": self.warehouse_id,
+            "old_quantity": self.old_quantity,
+            "new_quantity": self.new_quantity,
             "reason": self.reason
         }

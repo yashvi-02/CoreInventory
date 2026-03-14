@@ -1,35 +1,33 @@
-from flask import Blueprint, request, jsonify
-from models.adjustment_model import Adjustment
-from models.inventory_model import Inventory
-from extensions.db import db
+from flask import Blueprint, request
+from flask_jwt_extended import jwt_required
+from services.adjustment_service import AdjustmentService
+from utils.response import success_response, error_response
 
 adjustment_bp = Blueprint("adjustments", __name__)
 
+@adjustment_bp.route("", methods=["GET"], strict_slashes=False)
+@jwt_required()
+def get_adjustments():
+    try:
+        adjustments = AdjustmentService.get_all()
+        return success_response(adjustments, "Fetched all adjustments", 200)
+    except Exception as e:
+        return error_response(str(e), 500)
 
-@adjustment_bp.route("/", methods=["POST"])
+
+@adjustment_bp.route("", methods=["POST"], strict_slashes=False)
+@jwt_required()
 def adjust_inventory():
-
     data = request.json
+    if not data:
+        return error_response("Missing JSON payload", 400)
 
-    inventory = Inventory.query.filter_by(
-        product_id=data["product_id"],
-        warehouse_id=data["warehouse_id"]
-    ).first()
-
-    if not inventory:
-        return jsonify({"error": "Inventory not found"}), 404
-
-    adjustment = Adjustment(
-        product_id=data["product_id"],
-        warehouse_id=data["warehouse_id"],
-        old_quantity=inventory.quantity,
-        new_quantity=data["new_quantity"],
-        reason=data["reason"]
-    )
-
-    inventory.quantity = data["new_quantity"]
-
-    db.session.add(adjustment)
-    db.session.commit()
-
-    return jsonify({"message": "Inventory adjusted"})
+    try:
+        adjustment = AdjustmentService.create(data)
+        return success_response(adjustment, "Inventory adjusted successfully", 201)
+    except ValueError as e:
+        return error_response(str(e), 400)
+    except KeyError as e:
+        return error_response(str(e), 404)
+    except Exception as e:
+        return error_response(str(e), 500)
