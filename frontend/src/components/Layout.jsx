@@ -3,7 +3,7 @@ import { NavLink, Outlet, useNavigate } from 'react-router-dom';
 import { 
   Package, 
   LayoutDashboard, 
-  ReceiptText, 
+  Layers, 
   Truck, 
   ArrowLeftRight, 
   Settings2, 
@@ -29,7 +29,7 @@ const Layout = () => {
   const navItems = [
     { name: 'Dashboard', path: '/dashboard', icon: <LayoutDashboard size={20} /> },
     { name: 'Products', path: '/products', icon: <Package size={20} /> },
-    { name: 'Receipts', path: '/receipts', icon: <ReceiptText size={20} /> },
+    { name: 'Operations', path: '/operations', icon: <Layers size={20} /> },
     { name: 'Delivery Orders', path: '/delivery', icon: <Truck size={20} /> },
     { name: 'Transfers', path: '/transfers', icon: <ArrowLeftRight size={20} /> },
     { name: 'Inventory Adjustments', path: '/adjustments', icon: <Settings2 size={20} /> },
@@ -185,7 +185,7 @@ const Layout = () => {
         </header>
 
         {/* Page Content */}
-        <main className="flex-1 overflow-x-hidden overflow-y-auto bg-slate-50 p-6">
+        <main className="flex-1 overflow-x-hidden overflow-y-auto">
           <Outlet />
         </main>
       </div>

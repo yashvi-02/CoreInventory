@@ -3,6 +3,14 @@ import Layout from './components/Layout';
 import Login from './pages/Login';
 import Dashboard from './pages/Dashboard';
 import Products from './pages/Products';
+import StockLedger from './pages/StockLedger';
+import Operations from './pages/Operations';
+import DeliveryOrders from './pages/DeliveryOrders';
+import Receipts from './pages/Receipts';
+import Transfers from './pages/Transfers';
+import Warehouses from './pages/Warehouses';
+import Reports from './pages/Reports';
+import Settings from './pages/Settings';
 
 function App() {
   return (
@@ -17,14 +25,15 @@ function App() {
           <Route path="products" element={<Products />} />
           
           {/* Placeholder routes for future expansion */}
-          <Route path="receipts" element={<div className="p-6">Receipts Page</div>} />
-          <Route path="delivery" element={<div className="p-6">Delivery Orders Page</div>} />
-          <Route path="transfers" element={<div className="p-6">Transfers Page</div>} />
+          <Route path="operations" element={<Operations />} />
+          <Route path="receipts" element={<Receipts />} />
+          <Route path="delivery" element={<DeliveryOrders />} />
+          <Route path="transfers" element={<Transfers />} />
           <Route path="adjustments" element={<div className="p-6">Inventory Adjustments Page</div>} />
-          <Route path="warehouses" element={<div className="p-6">Warehouses Page</div>} />
-          <Route path="ledger" element={<div className="p-6">Stock Ledger Page</div>} />
-          <Route path="reports" element={<div className="p-6">Reports Page</div>} />
-          <Route path="settings" element={<div className="p-6">Settings Page</div>} />
+          <Route path="warehouses" element={<Warehouses />} />
+          <Route path="ledger" element={<StockLedger />} />
+          <Route path="reports" element={<Reports />} />
+          <Route path="settings" element={<Settings />} />
         </Route>
       </Routes>
     </Router>
