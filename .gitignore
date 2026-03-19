@@ -1,19 +1,43 @@
-# Dependencies
-node_modules/
+# Python virtual environments
+venv/
+.venv/
+env/
+ENV/
+
+# Python cache and tooling
 __pycache__/
-*.pyc
+*.py[cod]
+*.pyo
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.coverage
+.coverage.*
+htmlcov/
+
+# Node dependencies and build output
+node_modules/
+dist/
+dist-ssr/
+build/
+
+# Local environment files
 .env
+.env.*
+*.local
 
-# Database
+# Database and runtime files
 *.db
+*.sqlite
+*.sqlite3
+instance/
 
-# IDE
+# IDE and editor files
 .vscode/
 .idea/
-
-# Build output
-dist/
-build/
+*.suo
+*.swp
+*.swo
 
 # OS files
 .DS_Store
@@ -21,7 +45,12 @@ Thumbs.db
 
 # Logs
 *.log
+logs/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
 
-# Test artifacts
+# Test artifacts and scratch files
 test_api.py
 test_hackathon_api.py
