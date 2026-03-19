@@ -2,6 +2,7 @@ from flask import Blueprint, request
 from flask_jwt_extended import jwt_required
 from services.delivery_service import DeliveryService
 from utils.response import success_response, error_response
+from utils.rbac import require_manager_or_staff_in_warehouse
 
 delivery_bp = Blueprint("deliveries", __name__)
 
@@ -45,6 +46,9 @@ def validate_delivery(delivery_id):
     if not warehouse_id:
         return error_response("warehouse_id is required to validate delivery", 400)
     try:
+        warehouse_id = int(warehouse_id)
+        if not require_manager_or_staff_in_warehouse(warehouse_id):
+            return error_response("Access denied to this warehouse", 403)
         delivery = DeliveryService.validate(delivery_id, warehouse_id)
         return success_response(delivery, "Delivery validated successfully", 200)
     except ValueError as e:

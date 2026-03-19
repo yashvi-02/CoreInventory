@@ -2,6 +2,7 @@ from flask import Blueprint, request
 from flask_jwt_extended import jwt_required
 from services.receipt_service import ReceiptService
 from utils.response import success_response, error_response
+from utils.rbac import require_manager_or_staff_in_warehouse
 
 receipt_bp = Blueprint("receipts", __name__)
 
@@ -44,6 +45,9 @@ def validate_receipt(receipt_id):
     if not warehouse_id:
         return error_response("warehouse_id is required to validate receipt", 400)
     try:
+        warehouse_id = int(warehouse_id)
+        if not require_manager_or_staff_in_warehouse(warehouse_id):
+            return error_response("Access denied to this warehouse", 403)
         receipt = ReceiptService.validate(receipt_id, warehouse_id)
         return success_response(receipt, "Receipt validated successfully", 200)
     except ValueError as e:

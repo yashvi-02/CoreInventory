@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { Plus, Settings2 } from 'lucide-react';
 import { api } from '../services/api';
+import PageInfo from '../components/PageInfo';
 
 const Adjustments = () => {
   const [adjustments, setAdjustments] = useState([]);
@@ -48,6 +49,18 @@ const Adjustments = () => {
           <Plus size={18} /> New Adjustment
         </button>
       </div>
+
+      <PageInfo
+        title="What is the Inventory Adjustments page?"
+        description="Correct stock counts when physical counts differ from the system. Use this for damage, loss, or reconciliation."
+        activities={[
+          'Select product and warehouse to adjust',
+          'Enter the new (correct) quantity',
+          'Provide a reason for the adjustment',
+          'View adjustment history',
+          'Warehouse staff can only adjust stock in their assigned warehouse'
+        ]}
+      />
 
       <div className={`overflow-hidden transition-all duration-500 ${showForm ? 'max-h-[600px] opacity-100 mb-6' : 'max-h-0 opacity-0'}`}>
         <div className="bg-white rounded-2xl p-6 shadow-sm border border-slate-200">

@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { ArrowLeftRight, Search, Filter, CheckCircle2, Clock, Loader2 } from 'lucide-react';
+import PageInfo from '../components/PageInfo';
 
 const Transfers = () => {
   const [activeTab, setActiveTab] = useState('All');
@@ -44,9 +45,21 @@ const Transfers = () => {
           <h1 className="text-2xl font-bold text-slate-800 tracking-tight flex items-center gap-2">
             <ArrowLeftRight className="text-blue-600" /> Transfers
           </h1>
-          <p className="text-slate-500 text-sm mt-1">Track money transactions and payment statuses.</p>
+          <p className="text-slate-500 text-sm mt-1">Move stock between warehouses.</p>
         </div>
       </div>
+
+      <PageInfo
+        title="What is the Transfers page?"
+        description="Move inventory from one warehouse to another. Create transfer requests and validate them to update stock in both locations."
+        activities={[
+          'Create stock transfers between warehouses',
+          'Specify source and destination warehouses',
+          'Add products and quantities to transfer',
+          'Validate transfers to complete the move',
+          'Managers only: warehouse staff cannot create cross-warehouse transfers'
+        ]}
+      />
 
       {/* Summary Cards */}
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">

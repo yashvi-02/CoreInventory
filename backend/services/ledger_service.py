@@ -27,7 +27,12 @@ class LedgerService:
                 query = query.filter_by(product_id=filters["product_id"])
 
         entries = query.order_by(StockLedger.created_at.desc()).all()
-        return [e.to_dict() for e in entries]
+        result = []
+        for entry in entries:
+            item = entry.to_dict()
+            item["change"] = item["quantity"]
+            result.append(item)
+        return result
 
     @staticmethod
     def get_by_product(product_id):

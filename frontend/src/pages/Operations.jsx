@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Activity, Package, Truck, ArrowLeftRight, AlertTriangle, CheckCircle2, Clock, TrendingUp } from 'lucide-react';
 import { api } from '../services/api';
+import PageInfo from '../components/PageInfo';
 
 const Operations = () => {
   const navigate = useNavigate();
@@ -183,6 +184,18 @@ const Operations = () => {
           Refresh
         </button>
       </div>
+
+      <PageInfo
+        title="What is the Operations Center?"
+        description="A central view of all stock movements and pending tasks. Quickly jump to receipts, deliveries, transfers, or low stock items."
+        activities={[
+          'View pending receipts that need validation',
+          'Track deliveries awaiting dispatch',
+          'Monitor stock transfers between warehouses',
+          'See low stock alerts and take action',
+          'Click any card to go to that section'
+        ]}
+      />
 
       {/* Summary Cards */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">

@@ -3,7 +3,9 @@ from config import Config
 from extensions.db import db
 from flask_cors import CORS
 from flask_migrate import Migrate
-from sqlalchemy import text
+from sqlalchemy import inspect, text
+from models.category_model import Category
+from models.warehouse_model import Warehouse
 
 # Import all models so SQLAlchemy registers the tables
 from models import User, Category, Warehouse, Product, Receipt, Delivery, Transfer, Adjustment, StockLedger, Inventory
@@ -20,6 +22,43 @@ from routes.adjustment_routes import adjustment_bp
 from routes.ledger_routes import ledger_bp
 
 migrate = Migrate()
+
+
+def ensure_schema_updates():
+    inspector = inspect(db.engine)
+    existing_tables = set(inspector.get_table_names())
+    if "users" not in existing_tables:
+        return
+
+    user_columns = {column["name"] for column in inspector.get_columns("users")}
+    column_updates = [
+        ("email_verified", "ALTER TABLE users ADD COLUMN email_verified BOOLEAN NOT NULL DEFAULT 0"),
+        ("email_verification_otp", "ALTER TABLE users ADD COLUMN email_verification_otp VARCHAR(10)"),
+        ("email_verification_otp_expiry", "ALTER TABLE users ADD COLUMN email_verification_otp_expiry DATETIME"),
+    ]
+
+    for column_name, statement in column_updates:
+        if column_name not in user_columns:
+            db.session.execute(text(statement))
+
+    db.session.commit()
+
+
+def bootstrap_reference_data():
+    if Warehouse.query.count() == 0:
+        db.session.add_all([
+            Warehouse(name="Main Warehouse", location="Head Office"),
+            Warehouse(name="Secondary Warehouse", location="Operations Block"),
+        ])
+
+    if Category.query.count() == 0:
+        db.session.add_all([
+            Category(name="Electronics"),
+            Category(name="Raw Materials"),
+            Category(name="Finished Goods"),
+        ])
+
+    db.session.commit()
 
 
 def create_app():
@@ -40,6 +79,8 @@ def create_app():
     with app.app_context():
         try:
             db.create_all()
+            ensure_schema_updates()
+            bootstrap_reference_data()
             print("[OK] Database tables created successfully!")
         except Exception as e:
             print(f"[WARNING] Database connection failed: {e}")
@@ -93,4 +134,4 @@ def create_app():
 app = create_app()
 
 if __name__ == "__main__":
-    app.run(debug=True)
+    app.run(debug=True)

@@ -1,5 +1,7 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Settings as SettingsIcon, HelpCircle, ChevronDown, Search, BookOpen, Truck, CreditCard, Package, Building2, ShieldAlert, UserCog, Bell, Palette, SlidersHorizontal, Sun, Moon, Globe, Mail, Smartphone } from 'lucide-react';
+import { api } from '../services/api';
+import PageInfo from '../components/PageInfo';
 
 /* ─────── Help FAQ Data ─────── */
 const helpCategories = [
@@ -70,6 +72,33 @@ const Settings = () => {
   const [activeTab, setActiveTab] = useState('general');
   const [openItems, setOpenItems] = useState({});
   const [searchQuery, setSearchQuery] = useState('');
+  const [profile, setProfile] = useState({
+    fullName: '',
+    email: '',
+    phone: '',
+    role: '',
+  });
+
+  // Load profile from API
+  useEffect(() => {
+    const loadProfile = async () => {
+      try {
+        const res = await api.get('/auth/profile');
+        const d = res?.data ?? res;
+        if (d) {
+          setProfile(prev => ({
+            ...prev,
+            fullName: d.name || prev.fullName,
+            email: d.email || prev.email,
+            role: d.role === 'manager' || d.role === 'admin' ? 'Manager' : 'Warehouse Staff',
+          }));
+        }
+      } catch {
+        // Keep defaults
+      }
+    };
+    loadProfile();
+  }, []);
 
   // General settings state
   const [general, setGeneral] = useState({
@@ -78,14 +107,6 @@ const Settings = () => {
     currency: 'INR (₹)',
     language: 'English',
     dateFormat: 'DD/MM/YYYY',
-  });
-
-  // Profile state
-  const [profile, setProfile] = useState({
-    fullName: 'Admin User',
-    email: 'admin@coreinventory.com',
-    phone: '9876543210',
-    role: 'Administrator',
   });
 
   // Notification preferences
@@ -145,6 +166,18 @@ const Settings = () => {
         </h1>
         <p className="text-slate-500 text-sm mt-1">Manage your account, preferences, and get help.</p>
       </div>
+
+      <PageInfo
+        title="What is the Settings page?"
+        description="Configure your account, company preferences, notifications, and appearance. Find answers in the Help & FAQ section."
+        activities={[
+          'Update General settings (company name, timezone, currency, language)',
+          'Edit your Profile (name, email, change password)',
+          'Configure notification preferences',
+          'Switch theme (light/dark) and adjust appearance',
+          'Browse Help & FAQ for common questions'
+        ]}
+      />
 
       {/* Tabs */}
       <div className="flex items-center gap-1 bg-slate-100 p-1 rounded-lg border border-slate-200 w-fit flex-wrap">

@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { BookOpen, Filter, Search, Download } from 'lucide-react';
 import { api } from '../services/api';
+import PageInfo from '../components/PageInfo';
 
 const StockLedger = () => {
   const [entries, setEntries] = useState([]);
@@ -101,6 +102,18 @@ const StockLedger = () => {
           <Download size={16} /> Export CSV
         </button>
       </div>
+
+      <PageInfo
+        title="What is the Stock Ledger?"
+        description="A complete audit trail of every stock movement. Every receipt, delivery, transfer, and adjustment is recorded here."
+        activities={[
+          'View all stock transactions in chronological order',
+          'Filter by type (receipt, delivery, transfer, adjustment)',
+          'Filter by product or warehouse',
+          'Search and export to CSV for analysis',
+          'Warehouse staff see only their warehouse transactions'
+        ]}
+      />
 
       {/* Filters */}
       <div className="bg-white rounded-2xl p-4 shadow-sm border border-slate-200 flex flex-col sm:flex-row gap-4">

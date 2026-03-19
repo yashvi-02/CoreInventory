@@ -7,7 +7,7 @@ class AdjustmentService:
     @staticmethod
     def get_all():
         adjustments = Adjustment.query.all()
-        return [{"id": a.id, "product_id": a.product_id, "warehouse_id": a.warehouse_id, "old_quantity": a.old_quantity, "new_quantity": a.new_quantity, "reason": a.reason, "created_at": a.created_at} for a in adjustments]
+        return [{"id": a.id, "product_id": a.product_id, "warehouse_id": a.warehouse_id, "old_quantity": a.previous_quantity, "new_quantity": a.new_quantity, "reason": a.reason, "created_at": a.created_at} for a in adjustments]
 
     @staticmethod
     def create(data):
@@ -33,7 +33,7 @@ class AdjustmentService:
         adjustment = Adjustment(
             product_id=data["product_id"],
             warehouse_id=data["warehouse_id"],
-            old_quantity=old_qty,
+            previous_quantity=old_qty,
             new_quantity=data["new_quantity"],
             reason=data["reason"]
         )
@@ -45,7 +45,7 @@ class AdjustmentService:
         LedgerService.log_transaction(
             product_id=data["product_id"],
             warehouse_id=data["warehouse_id"],
-            operation_type="ADJUSTMENT",
+            operation_type="adjustment",
             quantity_change=qty_change,
             reference_id=adjustment.id
         )

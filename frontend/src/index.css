@@ -3,7 +3,15 @@
 @tailwind utilities;
 
 @layer base {
+  * {
+    box-sizing: border-box;
+  }
+
   body {
     @apply bg-[#f4f6f9] text-gray-800 antialiased;
   }
+}
+
+#root {
+  min-height: 100vh;
 }

@@ -1,4 +1,5 @@
-import { Package, Inbox, AlertTriangle, Activity } from 'lucide-react';
+import { useState, useEffect } from 'react';
+import { Package, Inbox, AlertTriangle, Activity, Truck, Repeat2 } from 'lucide-react';
 import {
   Chart as ChartJS,
   CategoryScale,
@@ -11,6 +12,8 @@ import {
   Filler
 } from 'chart.js';
 import { Line } from 'react-chartjs-2';
+import { api } from '../services/api';
+import PageInfo from '../components/PageInfo';
 
 ChartJS.register(
   CategoryScale,
@@ -24,12 +27,32 @@ ChartJS.register(
 );
 
 const Dashboard = () => {
-  // Mock data aligned to the user's legacy structure
+  const [metricsData, setMetricsData] = useState(null);
+  const [alerts, setAlerts] = useState([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    Promise.all([api.get('/dashboard'), api.get('/dashboard/alerts/low-stock')])
+      .then(([dashboardRes, alertsRes]) => {
+        setMetricsData(dashboardRes?.data ?? dashboardRes);
+        const alertList = alertsRes?.data ?? [];
+        setAlerts(Array.isArray(alertList) ? alertList : []);
+      })
+      .catch(() => {
+        setMetricsData(null);
+        setAlerts([]);
+      })
+      .finally(() => setLoading(false));
+  }, []);
+
+  const m = metricsData || {};
   const metrics = [
-    { title: 'Total Products', value: '428', icon: <Package size={24} />, color: 'text-blue-600', bg: 'bg-blue-100', trend: '+12%', trendUp: true },
-    { title: 'Total Quantity', value: '12,450', icon: <Inbox size={24} />, color: 'text-emerald-600', bg: 'bg-emerald-100', trend: '+5%', trendUp: true },
-    { title: 'Low Stock Alerts', value: '14', icon: <AlertTriangle size={24} />, color: 'text-rose-600', bg: 'bg-rose-100', trend: '-2%', trendUp: false },
-    { title: 'Pending Adjustments', value: '7', icon: <Activity size={24} />, color: 'text-amber-600', bg: 'bg-amber-100', trend: '+1', trendUp: true },
+    { title: 'Total Quantity', value: String(m.totalProducts ?? 0), icon: <Inbox size={24} />, color: 'text-emerald-600', bg: 'bg-emerald-100' },
+    { title: 'Low Stock Alerts', value: String(m.lowStock ?? 0), icon: <AlertTriangle size={24} />, color: 'text-rose-600', bg: 'bg-rose-100' },
+    { title: 'Out of Stock', value: String(m.outOfStock ?? 0), icon: <Package size={24} />, color: 'text-amber-600', bg: 'bg-amber-100' },
+    { title: 'Pending Receipts', value: String(m.pendingReceipts ?? 0), icon: <Activity size={24} />, color: 'text-blue-600', bg: 'bg-blue-100' },
+    { title: 'Pending Deliveries', value: String(m.pendingDeliveries ?? 0), icon: <Truck size={24} />, color: 'text-violet-600', bg: 'bg-violet-100' },
+    { title: 'Internal Transfers', value: String(m.internalTransfers ?? 0), icon: <Repeat2 size={24} />, color: 'text-cyan-700', bg: 'bg-cyan-100' },
   ];
 
   const chartData = {
@@ -73,34 +96,45 @@ const Dashboard = () => {
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
           <h1 className="text-2xl font-bold text-slate-800 tracking-tight">Dashboard Overview</h1>
-          <p className="text-slate-500 text-sm mt-1">Welcome back. Here's what's happening with your inventory today.</p>
+          <p className="text-slate-500 text-sm mt-1">
+            Welcome back. Here&apos;s what&apos;s happening with your inventory today.
+          </p>
         </div>
         <button className="self-start sm:self-auto bg-white border border-slate-200 text-slate-700 px-4 py-2 rounded-lg text-sm font-medium shadow-sm hover:bg-slate-50 transition-colors focus:outline-none focus:ring-2 focus:ring-slate-200">
           Download Report
         </button>
       </div>
 
+      <PageInfo
+        title="What is the Dashboard?"
+        description="Your central hub for inventory overview. See key metrics, trends, and recent activity at a glance."
+        activities={[
+          'View total stock quantity, low stock alerts, and out-of-stock items',
+          'Monitor pending receipts, deliveries, and transfers',
+          'Track inventory value trends over time',
+          'Download reports for analysis'
+        ]}
+      />
+
       {/* Metrics Cards */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-        {metrics.map((metric, idx) => (
-          <div key={idx} className="bg-white rounded-2xl p-6 shadow-sm border border-slate-100 hover:shadow-md transition-shadow">
-            <div className="flex justify-between items-start">
-              <div>
-                <p className="text-slate-500 text-sm font-medium mb-1">{metric.title}</p>
-                <h3 className="text-3xl font-bold text-slate-800 tracking-tight">{metric.value}</h3>
-              </div>
-              <div className={`p-3 rounded-xl ${metric.bg} ${metric.color}`}>
-                {metric.icon}
+      <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-6">
+        {loading ? (
+          <div className="col-span-full text-center py-12 text-slate-500">Loading...</div>
+        ) : (
+          metrics.map((metric, idx) => (
+            <div key={idx} className="bg-white rounded-2xl p-6 shadow-sm border border-slate-100 hover:shadow-md transition-shadow">
+              <div className="flex justify-between items-start">
+                <div>
+                  <p className="text-slate-500 text-sm font-medium mb-1">{metric.title}</p>
+                  <h3 className="text-3xl font-bold text-slate-800 tracking-tight">{metric.value}</h3>
+                </div>
+                <div className={`p-3 rounded-xl ${metric.bg} ${metric.color}`}>
+                  {metric.icon}
+                </div>
               </div>
             </div>
-            <div className="mt-4 flex items-center gap-2">
-              <span className={`text-sm font-medium ${metric.trendUp ? 'text-emerald-600' : 'text-rose-600'}`}>
-                {metric.trend}
-              </span>
-              <span className="text-slate-400 text-xs">vs last month</span>
-            </div>
-          </div>
-        ))}
+          ))
+        )}
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
@@ -146,6 +180,69 @@ const Dashboard = () => {
           <button className="w-full mt-4 py-2 border border-slate-200 text-slate-600 rounded-lg text-sm font-medium hover:bg-slate-50 transition-colors shrink-0 focus:outline-none focus:ring-2 focus:ring-slate-200">
             View All Activity
           </button>
+        </div>
+      </div>
+
+      <div className="grid grid-cols-1 gap-6 xl:grid-cols-[minmax(0,1.3fr),minmax(0,1fr)]">
+        <div className="rounded-2xl border border-slate-100 bg-white p-6 shadow-sm">
+          <div className="flex items-center justify-between gap-3">
+            <div>
+              <h2 className="text-lg font-bold text-slate-800">Operational Snapshot</h2>
+              <p className="mt-1 text-sm text-slate-500">
+                Quick coverage of the requirements called out in the project brief.
+              </p>
+            </div>
+            <div className="rounded-xl bg-slate-100 px-3 py-1 text-xs font-semibold text-slate-600">
+              Live API
+            </div>
+          </div>
+
+          <div className="mt-5 grid gap-4 md:grid-cols-3">
+            <div className="rounded-2xl bg-slate-50 p-4">
+              <p className="text-sm text-slate-500">Receipts waiting</p>
+              <p className="mt-2 text-2xl font-semibold text-slate-900">{m.pendingReceipts ?? 0}</p>
+            </div>
+            <div className="rounded-2xl bg-slate-50 p-4">
+              <p className="text-sm text-slate-500">Deliveries pending</p>
+              <p className="mt-2 text-2xl font-semibold text-slate-900">{m.pendingDeliveries ?? 0}</p>
+            </div>
+            <div className="rounded-2xl bg-slate-50 p-4">
+              <p className="text-sm text-slate-500">Transfers scheduled</p>
+              <p className="mt-2 text-2xl font-semibold text-slate-900">{m.internalTransfers ?? 0}</p>
+            </div>
+          </div>
+        </div>
+
+        <div className="rounded-2xl border border-slate-100 bg-white p-6 shadow-sm">
+          <div className="flex items-center justify-between gap-3">
+            <div>
+              <h2 className="text-lg font-bold text-slate-800">Low Stock Watchlist</h2>
+              <p className="mt-1 text-sm text-slate-500">Products at or below their reorder point.</p>
+            </div>
+            <div className="rounded-xl bg-rose-50 px-3 py-1 text-xs font-semibold text-rose-700">
+              {alerts.length} alerts
+            </div>
+          </div>
+
+          <div className="mt-5 space-y-3">
+            {alerts.length === 0 ? (
+              <div className="rounded-2xl border border-dashed border-slate-200 p-6 text-sm text-slate-500">
+                No low-stock items right now.
+              </div>
+            ) : (
+              alerts.slice(0, 5).map((alert) => (
+                <div key={alert.product_id} className="flex items-center justify-between rounded-2xl bg-slate-50 px-4 py-3">
+                  <div>
+                    <p className="font-medium text-slate-900">{alert.product_name}</p>
+                    <p className="text-sm text-slate-500">
+                      {alert.quantity} on hand, reorder at {alert.reorder_level}
+                    </p>
+                  </div>
+                  <AlertTriangle className="text-rose-500" size={18} />
+                </div>
+              ))
+            )}
+          </div>
         </div>
       </div>
 

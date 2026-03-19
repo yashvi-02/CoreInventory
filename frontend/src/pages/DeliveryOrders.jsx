@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { Plus, Truck, CheckCircle, Clock, Trash2, Search, Filter } from 'lucide-react';
 import { api } from '../services/api';
+import PageInfo from '../components/PageInfo';
 
 const DeliveryOrders = () => {
   const [deliveries, setDeliveries] = useState([]);
@@ -141,6 +142,18 @@ const DeliveryOrders = () => {
           <Plus size={18} /> New Delivery Order
         </button>
       </div>
+
+      <PageInfo
+        title="What is the Delivery Orders page?"
+        description="Manage outgoing shipments to customers. Create delivery orders and validate them to deduct stock from a warehouse."
+        activities={[
+          'Create new delivery orders with customer details and items',
+          'Add multiple products and quantities per order',
+          'Validate deliveries to deduct stock from the chosen warehouse',
+          'View and filter all deliveries by status',
+          'Warehouse staff can only validate into their assigned warehouse'
+        ]}
+      />
 
       {/* Form */}
       <div className={`overflow-hidden transition-all duration-500 ease-in-out ${showForm ? 'max-h-[900px] opacity-100 mb-6' : 'max-h-0 opacity-0'}`}>

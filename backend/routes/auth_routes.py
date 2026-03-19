@@ -11,14 +11,38 @@ def register():
         return error_response("Missing JSON payload", 400)
         
     try:
-        user = AuthService.register(data)
-        return success_response({"id": user.id}, "User registered successfully", 201)
+        result = AuthService.register(data)
+        return success_response(result, "Registration successful. Verify your email to continue.", 201)
     except ValueError as e:
         return error_response(str(e), 400)
     except FileExistsError as e:
         return error_response(str(e), 409)
     except Exception as e:
         return error_response(str(e), 500)
+
+@auth_bp.route("/verify-email", methods=["POST"], strict_slashes=False)
+def verify_email():
+    data = request.json
+    if not data or "email" not in data or "otp" not in data:
+        return error_response("Missing email or verification code", 400)
+
+    try:
+        result = AuthService.verify_email(data["email"], data["otp"])
+        return success_response(result, "Email verified successfully", 200)
+    except ValueError as e:
+        return error_response(str(e), 400)
+
+@auth_bp.route("/resend-verification", methods=["POST"], strict_slashes=False)
+def resend_verification():
+    data = request.json
+    if not data or "email" not in data:
+        return error_response("Missing email", 400)
+
+    try:
+        result = AuthService.resend_verification(data["email"])
+        return success_response(result, "Verification code sent", 200)
+    except ValueError as e:
+        return error_response(str(e), 400)
 
 @auth_bp.route("/login", methods=["POST"], strict_slashes=False)
 def login():
@@ -28,13 +52,28 @@ def login():
 
     try:
         result = AuthService.login(data)
-        return success_response(result, "Login successful", 200)
+        return success_response(result, "OTP sent. Verify to complete login.", 200)
     except ValueError as e:
         return error_response(str(e), 400)
     except PermissionError as e:
         return error_response(str(e), 401)
     except Exception as e:
         return error_response("Failed to login", 500)
+
+
+@auth_bp.route("/verify-login-otp", methods=["POST"], strict_slashes=False)
+def verify_login_otp():
+    data = request.json
+    if not data or "email" not in data or "otp" not in data:
+        return error_response("Missing email or OTP", 400)
+
+    try:
+        result = AuthService.verify_login_otp(data["email"], data["otp"])
+        return success_response(result, "Login successful", 200)
+    except PermissionError as e:
+        return error_response(str(e), 401)
+    except Exception as e:
+        return error_response("Failed to verify OTP", 500)
 
 @auth_bp.route("/request-reset-otp", methods=["POST"], strict_slashes=False)
 def request_reset_otp():

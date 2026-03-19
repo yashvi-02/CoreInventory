@@ -2,6 +2,7 @@ from flask import Blueprint, request
 from flask_jwt_extended import jwt_required
 from services.transfer_service import TransferService
 from utils.response import success_response, error_response
+from utils.rbac import require_manager
 
 transfer_bp = Blueprint("transfers", __name__)
 
@@ -28,6 +29,7 @@ def get_transfer(transfer_id):
 
 @transfer_bp.route("", methods=["POST"], strict_slashes=False)
 @jwt_required()
+@require_manager
 def create_transfer():
     data = request.json
     try:
@@ -40,6 +42,7 @@ def create_transfer():
 
 @transfer_bp.route("/<int:transfer_id>/validate", methods=["POST"], strict_slashes=False)
 @jwt_required()
+@require_manager
 def validate_transfer(transfer_id):
     try:
         transfer = TransferService.validate(transfer_id)

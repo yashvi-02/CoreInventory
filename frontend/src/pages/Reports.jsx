@@ -14,6 +14,7 @@ import {
   Filler
 } from 'chart.js';
 import { Line, Bar } from 'react-chartjs-2';
+import PageInfo from '../components/PageInfo';
 
 ChartJS.register(
   CategoryScale,
@@ -294,6 +295,17 @@ const Reports = () => {
           </button>
         </div>
       </div>
+
+      <PageInfo
+        title="What is the Reports page?"
+        description="Analytics and insights into your inventory operations. View charts, summaries, and trends across receipts, deliveries, and transfers."
+        activities={[
+          'View summary counts for receipts, deliveries, transfers, and adjustments',
+          'See transaction trends over time with charts',
+          'Filter by date range (7 days, 30 days, 90 days, or all time)',
+          'Export reports for external analysis'
+        ]}
+      />
 
       {/* Summary Cards */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
